@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MetricsPro - Business Intelligence</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+  * { font-family: 'Inter', sans-serif; }
+  body {
+    background: radial-gradient(ellipse at top left, #2a0010 0%, #800020 40%, #1a0008 100%);
+    overflow: hidden;
+    min-height: 100vh;
+  }
+  .serif { font-family: 'Playfair Display', serif; }
+  
+  /* Slide transitions */
+  .slide {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transform: scale(0.96);
+    transition: all 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+    overflow-y: auto;
+    padding: 3rem 4rem;
+  }
+  .slide.active {
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: all;
+  }
+  
+  /* Gold gradient text */
+  .gold-text {
+    background: linear-gradient(135deg, #D4AF37 0%, #F4E5A1 50%, #D4AF37 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  /* Glass card */
+  .glass {
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(212, 175, 55, 0.15);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
+  
+  .glass-strong {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(24px);
+    border: 1px solid rgba(212, 175, 55, 0.25);
+  }
+  
+  /* Animated gradient border */
+  .gradient-border {
+    position: relative;
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(20px);
+  }
+  .gradient-border::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    padding: 1px;
+    border-radius: inherit;
+    background: linear-gradient(135deg, #D4AF37, transparent, #D4AF37);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+  
+  /* Hover effects */
+  .hover-lift {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .hover-lift:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(212, 175, 55, 0.2);
+  }
+  
+  /* Progress bar */
+  .progress-fill {
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  /* Floating orbs */
+  .orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.3;
+    animation: float 20s ease-in-out infinite;
+  }
+  @keyframes float {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(50px, -50px) scale(1.1); }
+    66% { transform: translate(-30px, 30px) scale(0.9); }
+  }
+  
+  /* Fade in animation */
+  .fade-up {
+    animation: fadeUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) both;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  .delay-1 { animation-delay: 0.1s; }
+  .delay-2 { animation-delay: 0.2s; }
+  .delay-3 { animation-delay: 0.3s; }
+  .delay-4 { animation-delay: 0.4s; }
+  .delay-5 { animation-delay: 0.5s; }
+  .delay-6 { animation-delay: 0.6s; }
+  
+  /* Pulse dot */
+  .pulse-dot {
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.2); }
+  }
+  
+  /* Number counter */
+  .counter {
+    font-variant-numeric: tabular-nums;
+  }
+  
+  /* Custom scrollbar */
+  .slide::-webkit-scrollbar { width: 6px; }
+  .slide::-webkit-scrollbar-track { background: transparent; }
+  .slide::-webkit-scrollbar-thumb { background: rgba(212, 175, 55, 0.3); border-radius: 3px; }
+  
+  /* Slide number */
+  .slide-number {
+    font-feature-settings: 'tnum';
+    font-variant-numeric: tabular-nums;
+  }
+  
+  /* Shine effect */
+  .shine {
+    position: relative;
+    overflow: hidden;
+  }
+  .shine::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent 30%, rgba(212, 175, 55, 0.1) 50%, transparent 70%);
+    transform: translateX(-100%);
+    transition: transform 0.8s;
+  }
+  .shine:hover::after {
+    transform: translateX(100%);
+  }
+  
+  /* Tag */
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.375rem 0.875rem;
+    background: rgba(212, 175, 55, 0.15);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #F4E5A1;
+  }
+  
+  /* Nav button */
+  .nav-btn {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .nav-btn:hover:not(:disabled) {
+    transform: scale(1.1);
+    background: rgba(212, 175, 55, 0.2);
+  }
+  .nav-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+  
+  /* Timeline */
+  .timeline-line {
+    background: linear-gradient(180deg, #D4AF37 0%, transparent 100%);
+  }
+  
+  /* Table styles */
+  .data-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+  .data-table th {
+    background: rgba(212, 175, 55, 0.15);
+    padding: 0.875rem 1rem;
+    text-align: left;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #F4E5A1;
+  }
+  .data-table td {
+    padding: 0.875rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    font-size: 0.875rem;
+  }
+  .data-table tr:hover td {
+    background: rgba(212, 175, 55, 0.05);
+  }
+</style>
+</head>
+<body class="text-white">
+
+<!-- Background orbs -->
+<div class="orb" style="width: 400px; height: 400px; background: #D4AF37; top: -100px; right: -100px;"></div>
+<div class="orb" style="width: 500px; height: 500px; background: #800020; bottom: -150px; left: -150px; animation-delay: -5s;"></div>
+<div class="orb" style="width: 300px; height: 300px; background: #6B001A; top: 50%; left: 50%; animation-delay: -10s;"></div>
+
+<!-- Progress bar -->
+<div class="fixed top-0 left-0 right-0 h-1 bg-black/30 z-50">
+  <div id="progressBar" class="h-full progress-fill" style="width: 6.66%; background: linear-gradient(90deg, #D4AF37 0%, #F4E5A1 100%);"></div>
+</div>
+
+<!-- Top bar -->
+<div class="fixed top-4 left-4 right-4 z-50 flex items-center justify-between pointer-events-none">
+  <div class="glass px-4 py-2 rounded-full pointer-events-auto flex items-center gap-2">
+    <div class="w-2 h-2 rounded-full bg-[#D4AF37] pulse-dot"></div>
+    <span class="text-xs font-semibold tracking-wider text-white/80">METRICSPRO · BUSINESS INTELLIGENCE</span>
+  </div>
+  <div class="glass px-4 py-2 rounded-full pointer-events-auto">
+    <span class="text-sm font-bold gold-text slide-number"><span id="currentSlide">01</span> / <span id="totalSlides">15</span></span>
+  </div>
+</div>
+
+<!-- Slides container -->
+<div class="relative w-screen h-screen">
+
+  <!-- SLIDE 1: PORTADA -->
+  <div class="slide active flex flex-col items-center justify-center text-center">
+    <div class="fade-up">
+      <div class="tag mb-8 mx-auto">
+        <span>📊</span>
+        <span>Proyecto de Curso · 2025</span>
+      </div>
+      <h1 class="serif text-8xl font-black mb-6 leading-none">
+        <span class="gold-text">MetricsPro</span>
+      </h1>
+      <p class="text-2xl text-white/90 max-w-3xl mx-auto mb-4 font-light leading-relaxed">
+        Impacto del Marketing Digital en las Decisiones de Compra mediante
+        <span class="font-semibold gold-text">Business Intelligence</span>
+      </p>
+      <div class="w-24 h-px bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent mx-auto my-10"></div>
+      <div class="flex items-center justify-center gap-12 text-sm">
+        <div>
+          <p class="text-white/50 text-xs uppercase tracking-wider mb-1">Universidad</p>
+          <p class="font-semibold">Universidad del Valle</p>
+        </div>
+        <div class="w-px h-10 bg-[#D4AF37]/30"></div>
+        <div>
+          <p class="text-white/50 text-xs uppercase tracking-wider mb-1">Materia</p>
+          <p class="font-semibold">Business Intelligence</p>
+        </div>
+        <div class="w-px h-10 bg-[#D4AF37]/30"></div>
+        <div>
+          <p class="text-white/50 text-xs uppercase tracking-wider mb-1">Docente</p>
+          <p class="font-semibold">Oscar Contreras</p>
+        </div>
+      </div>
+    </div>
+    <div class="absolute bottom-12 flex items-center gap-3 text-xs text-white/50">
+      <span>Presiona</span>
+      <kbd class="px-2 py-1 rounded bg-white/10 border border-white/20">→</kbd>
+      <span>para continuar</span>
+    </div>
+  </div>
+
+  <!-- SLIDE 2: EQUIPO -->
+  <div class="slide flex flex-col items-center justify-center">
+    <div class="text-center mb-12 fade-up">
+      <div class="tag mb-4 mx-auto">
+        <span>👥</span>
+        <span>Nuestro Equipo</span>
+      </div>
+      <h2 class="serif text-6xl font-bold gold-text">Desarrolladores</h2>
+    </div>
+    <div class="grid grid-cols-3 gap-8 max-w-5xl w-full">
+      <div class="glass rounded-3xl p-8 text-center hover-lift shine fade-up delay-1">
+        <div class="w-24 h-24 rounded-full mx-auto mb-5 flex items-center justify-center text-4xl font-black text-[#800020]" style="background: linear-gradient(135deg, #D4AF37, #F4E5A1);">RA</div>
+        <h3 class="text-xl font-bold mb-2">Renata Aneyba</h3>
+        <p class="text-white/60 text-sm mb-4">Aneyba Mercado Renata Alexia</p>
+        <div class="inline-block px-3 py-1 rounded-full bg-[#D4AF37]/20 text-[#F4E5A1] text-xs font-bold">33% Contribución</div>
+      </div>
+      <div class="glass rounded-3xl p-8 text-center hover-lift shine fade-up delay-2">
+        <div class="w-24 h-24 rounded-full mx-auto mb-5 flex items-center justify-center text-4xl font-black text-[#800020]" style="background: linear-gradient(135deg, #D4AF37, #F4E5A1);">JL</div>
+        <h3 class="text-xl font-bold mb-2">Joaquín Lara</h3>
+        <p class="text-white/60 text-sm mb-4">Lara Loza Joaquín</p>
+        <div class="inline-block px-3 py-1 rounded-full bg-[#D4AF37]/20 text-[#F4E5A1] text-xs font-bold">33% Contribución</div>
+      </div>
+      <div class="glass rounded-3xl p-8 text-center hover-lift shine fade-up delay-3">
+        <div class="w-24 h-24 rounded-full mx-auto mb-5 flex items-center justify-center text-4xl font-black text-[#800020]" style="background: linear-gradient(135deg, #D4AF37, #F4E5A1);">SR</div>
+        <h3 class="text-xl font-bold mb-2">Santiago Rojas</h3>
+        <p class="text-white/60 text-sm mb-4">Rojas Quinteros Santiago</p>
+        <div class="inline-block px-3 py-1 rounded-full bg-[#D4AF37]/20 text-[#F4E5A1] text-xs font-bold">33% Contribución</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 3: PROBLEMÁTICA -->
+  <div class="slide flex items-center">
+    <div class="max-w-6xl w-full mx-auto grid grid-cols-2 gap-16 items-center">
+      <div class="fade-up">
+        <div class="tag mb-6">
+          <span>🎯</span>
+          <span>Problemática</span>
+        </div>
+        <h2 class="serif text-6xl font-bold mb-6 leading-tight">
+          Las empresas invierten <span class="gold-text">a ciegas</span>
+        </h2>
+        <p class="text-lg text-white/80 leading-relaxed mb-6">
+          Las organizaciones destinan grandes recursos al marketing digital <span class="text-[#F4E5A1] font-semibold">sin análisis sistemático</span> de los datos generados, dificultando identificar qué estrategia genera mayor impacto.
+        </p>
+        <div class="flex items-center gap-3 text-sm text-white/60">
+          <i data-lucide="alert-circle" class="w-4 h-4 text-[#D4AF37]"></i>
+          <span>Consecuencia: inversiones poco efectivas y pérdida de rentabilidad</span>
+        </div>
+      </div>
+      <div class="space-y-4 fade-up delay-2">
+        <div class="glass rounded-2xl p-6 flex items-start gap-4 hover-lift">
+          <div class="w-12 h-12 rounded-xl bg-[#D4AF37]/20 flex items-center justify-center flex-shrink-0">
+            <i data-lucide="alert-triangle" class="w-6 h-6 text-[#D4AF37]"></i>
+          </div>
+          <div>
+            <h4 class="font-bold mb-1">Inversiones sin análisis</h4>
+            <p class="text-sm text-white/60">Recursos asignados sin evaluar datos generados</p>
+          </div>
+        </div>
+        <div class="glass rounded-2xl p-6 flex items-start gap-4 hover-lift">
+          <div class="w-12 h-12 rounded-xl bg-[#D4AF37]/20 flex items-center justify-center flex-shrink-0">
+            <i data-lucide="database" class="w-6 h-6 text-[#D4AF37]"></i>
+          </div>
+          <div>
+            <h4 class="font-bold mb-1">Poca aplicación de BI</h4>
+            <p class="text-sm text-white/60">Incapacidad de transformar datos en información accionable</p>
+          </div>
+        </div>
+        <div class="glass rounded-2xl p-6 flex items-start gap-4 hover-lift">
+          <div class="w-12 h-12 rounded-xl bg-[#D4AF37]/20 flex items-center justify-center flex-shrink-0">
+            <i data-lucide="trending-down" class="w-6 h-6 text-[#D4AF37]"></i>
+          </div>
+          <div>
+            <h4 class="font-bold mb-1">Pérdida de rentabilidad</h4>
+            <p class="text-sm text-white/60">Oportunidades desaprovechadas de posicionamiento</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 4: OBJETIVOS -->
+  <div class="slide flex items-center">
+    <div class="max-w-6xl w-full mx-auto">
+      <div class="text-center mb-10 fade-up">
+        <div class="tag mb-4 mx-auto">
+          <span>🎯</span>
+          <span>Objetivos</span>
+        </div>
+        <h2 class="serif text-6xl font-bold gold-text">Nuestras Metas</h2>
+      </div>
+      <div class="grid grid-cols-5 gap-4 fade-up delay-2">
+        <div class="glass rounded-2xl p-5 hover-lift col-span-2 row-span-2">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center text-[#800020] font-black text-lg" style="background: linear-gradient(135deg, #D4AF37, #F4E5A1);">OG</div>
+            <h3 class="text-lg font-bold gold-text">Objetivo General</h3>
+          </div>
+          <p class="text-white/80 leading-relaxed text-sm">
+            Diseñar e implementar una solución de BI basada en <span class="text-[#F4E5A1] font-semibold">Data Warehouse</span> y la aplicación web <span class="text-[#F4E5A1] font-semibold">MetricsPro</span> para cuantificar el impacto del marketing digital en las decisiones de compra.
+          </p>
+        </div>
+        <div class="glass rounded-2xl p-4 hover-lift flex items-center gap-3">
+          <div class="w-8 h-8 rounded-full bg-[#D4AF37] flex items-center justify-center text-[#800020] font-black text-sm flex-shrink-0">1</div>
+          <span class="text-xs">Recolectar dataset</span>
+        </div>
+        <div class="glass rounded-2xl p-4 hover-lift flex items-center gap-3">
+          <div class="w-8 h-8 rounded-full bg-[#D4AF37] flex items-center justify-center text-[#800020] font-black text-sm flex-shrink-0">2</div>
+          <span class="text-xs">Proceso ETL completo</span>
+        </div>
+        <div class="glass rounded-2xl p-4 hover-lift flex items-center gap-3">
+          <div class="w-8 h-8 rounded-full bg-[#D4AF37] flex items-center justify-center text-[#800020] font-black text-sm flex-shrink-0">3</div>
+          <span class="text-xs">Data Warehouse</span>
+        </div>
+        <div class="glass rounded-2xl p-4 hover-lift flex items-center gap-3">
+          <div class="w-8 h-8 rounded-full bg-[#D4AF37] flex items-center justify-center text-[#800020] font-black text-sm flex-shrink-0">4</div>
+          <span class="text-xs">7 KPIs estratégicos</span>
+        </div>
+        <div class="glass rounded-2xl p-4 hover-lift flex items-center gap-3">
+          <div class="w-8 h-8 rounded-full bg-[#D4AF37] flex items-center justify-center text-[#800020] font-black text-sm flex-shrink-0">5</div>
+          <span class="text-xs">Dashboard web</span>
+        </div>
+        <div class="glass rounded-2xl p-4 hover-lift flex items-center gap-3">
+          <div class="w-8 h-8 rounded-full bg-[#D4AF37] flex items-center justify-center text-[#800020] font-black text-sm flex-shrink-0">6</div>
+          <span class="text-xs">Patrones identificados</span>
+        </div>
+        <div class="glass rounded-2xl p-4 hover-lift flex items-center gap-3">
+          <div class="w-8 h-8 rounded-full bg-[#D4AF37] flex items-center justify-center text-[#800020] font-black text-sm flex-shrink-0">7</div>
+          <span class="text-xs">Informe técnico</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 5: DATASET -->
+  <div class="slide flex items-center">
+    <div class="max-w-6xl w-full mx-auto">
+      <div class="text-center mb-10 fade-up">
+        <div class="tag mb-4 mx-auto">
+          <span>📦</span>
+          <span>Dataset</span>
+        </div>
+        <h2 class="serif text-6xl font-bold mb-3">Social Media <span class="gold-text">Engagement</span></h2>
+        <p class="text-white/60">Fuente: Kaggle · Aviral342 · 2024</p>
+      </div>
+      <div class="grid grid-cols-4 gap-5 mb-8 fade-up delay-1">
+        <div class="glass rounded-2xl p-6 text-center hover-lift">
+          <div class="serif text-5xl font-black gold-text mb-2">10K+</div>
+          <p class="text-sm text-white/60">Registros</p>
+        </div>
+        <div class="glass rounded-2xl p-6 text-center hover-lift">
+          <div class="serif text-5xl font-black gold-text mb-2">15+</div>
+          <p class="text-sm text-white/60">Variables</p>
+        </div>
+        <div class="glass rounded-2xl p-6 text-center hover-lift">
+          <div class="serif text-5xl font-black gold-text mb-2">6</div>
+          <p class="text-sm text-white/60">Plataformas</p>
+        </div>
+        <div class="glass rounded-2xl p-6 text-center hover-lift">
+          <div class="serif text-5xl font-black gold-text mb-2">12</div>
+          <p class="text-sm text-white/60">Tipos Contenido</p>
+        </div>
+      </div>
+      <div class="glass rounded-2xl p-6 fade-up delay-2">
+        <h3 class="font-bold mb-4 text-sm uppercase tracking-wider text-[#F4E5A1]">Variables principales</h3>
+        <div class="grid grid-cols-5 gap-2">
+          <div class="px-3 py-2 bg-[#D4AF37]/10 border border-[#D4AF37]/20 rounded-lg text-center text-xs">💗 Likes</div>
+          <div class="px-3 py-2 bg-[#D4AF37]/10 border border-[#D4AF37]/20 rounded-lg text-center text-xs">💬 Comments</div>
+          <div class="px-3 py-2 bg-[#D4AF37]/10 border border-[#D4AF37]/20 rounded-lg text-center text-xs">🔄 Shares</div>
+          <div class="px-3 py-2 bg-[#D4AF37]/10 border border-[#D4AF37]/20 rounded-lg text-center text-xs">👁️ Views</div>
+          <div class="px-3 py-2 bg-[#D4AF37]/10 border border-[#D4AF37]/20 rounded-lg text-center text-xs">💾 Saves</div>
+          <div class="px-3 py-2 bg-[#D4AF37]/10 border border-[#D4AF37]/20 rounded-lg text-center text-xs">📱 Platform</div>
+          <div class="px-3 py-2 bg-[#D4AF37]/10 border border-[#D4AF37]/20 rounded-lg text-center text-xs">📝 Content_Type</div>
+          <div class="px-3 py-2 bg-[#D4AF37]/10 border border-[#D4AF37]/20 rounded-lg text-center text-xs">📅 Timestamp</div>
+          <div class="px-3 py-2 bg-[#D4AF37]/10 border border-[#D4AF37]/20 rounded-lg text-center text-xs">🎯 Category</div>
+          <div class="px-3 py-2 bg-[#D4AF37]/10 border border-[#D4AF37]/20 rounded-lg text-center text-xs">👥 Followers</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 6: ARQUITECTURA -->
+  <div class="slide flex items-center">
+    <div class="max-w-6xl w-full mx-auto">
+      <div class="text-center mb-10 fade-up">
+        <div class="tag mb-4 mx-auto">
+          <span>🏗️</span>
+          <span>Arquitectura</span>
+        </div>
+        <h2 class="serif text-6xl font-bold">Tres Capas <span class="gold-text">Integradas</span></h2>
+      </div>
+      <div class="space-y-3 fade-up delay-2">
+        <div class="glass-strong rounded-2xl p-6 border-l-4 border-[#D4AF37] hover-lift">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-5">
+              <div class="w-16 h-16 rounded-2xl flex items-center justify-center text-[#800020]" style="background: linear-gradient(135deg, #D4AF37, #F4E5A1);">
+                <i data-lucide="database" class="w-8 h-8"></i>
+              </div>
+              <div>
+                <h3 class="text-2xl font-bold gold-text">Capa 1: Almacenamiento</h3>
+                <p class="text-white/60 text-sm">PostgreSQL + Esquema Estrella</p>
+              </div>
+            </div>
+            <span class="px-4 py-2 bg-[#D4AF37]/20 text-[#F4E5A1] rounded-full text-xs font-bold uppercase tracking-wider">Data Warehouse</span>
+          </div>
+        </div>
+        <div class="flex justify-center">
+          <i data-lucide="arrow-down" class="w-6 h-6 text-[#D4AF37]"></i>
+        </div>
+        <div class="glass-strong rounded-2xl p-6 border-l-4 border-[#D4AF37] hover-lift">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-5">
+              <div class="w-16 h-16 rounded-2xl flex items-center justify-center text-[#800020]" style="background: linear-gradient(135deg, #D4AF37, #F4E5A1);">
+                <i data-lucide="cpu" class="w-8 h-8"></i>
+              </div>
+              <div>
+                <h3 class="text-2xl font-bold gold-text">Capa 2: Backend</h3>
+                <p class="text-white/60 text-sm">Flask + Python + API REST</p>
+              </div>
+            </div>
+            <span class="px-4 py-2 bg-[#D4AF37]/20 text-[#F4E5A1] rounded-full text-xs font-bold uppercase tracking-wider">Lógica de Negocio</span>
+          </div>
+        </div>
+        <div class="flex justify-center">
+          <i data-lucide="arrow-down" class="w-6 h-6 text-[#D4AF37]"></i>
+        </div>
+        <div class="glass-strong rounded-2xl p-6 border-l-4 border-[#D4AF37] hover-lift">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-5">
+              <div class="w-16 h-16 rounded-2xl flex items-center justify-center text-[#800020]" style="background: linear-gradient(135deg, #D4AF37, #F4E5A1);">
+                <i data-lucide="layout" class="w-8 h-8"></i>
+              </div>
+              <div>
+                <h3 class="text-2xl font-bold gold-text">Capa 3: Frontend</h3>
+                <p class="text-white/60 text-sm">HTML5 + CSS3 + JS + Chart.js</p>
+              </div>
+            </div>
+            <span class="px-4 py-2 bg-[#D4AF37]/20 text-[#F4E5A1] rounded-full text-xs font-bold uppercase tracking-wider">Presentación</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 7: ETL -->
+  <div class="slide flex items-center">
+    <div class="max-w-6xl w-full mx-auto">
+      <div class="text-center mb-10 fade-up">
+        <div class="tag mb-4 mx-auto">
+          <span>⚙️</span>
+          <span>ETL Pipeline</span>
+        </div>
+        <h2 class="serif text-6xl font-bold">Pipeline de <span class="gold-text">Datos</span></h2>
+      </div>
+      <div class="grid grid-cols-3 gap-5 mb-6 fade-up delay-1">
+        <div class="glass rounded-2xl p-6 hover-lift">
+          <div class="w-14 h-14 rounded-xl flex items-center justify-center text-[#800020] font-black text-2xl mb-4" style="background: linear-gradient(135deg, #D4AF37, #F4E5A1);">E</div>
+          <h3 class="text-xl font-bold mb-3 gold-text">Extracción</h3>
+          <ul class="space-y-2 text-sm text-white/70">
+            <li class="flex items-start gap-2"><span class="text-[#D4AF37] mt-0.5">▸</span> Lectura del CSV</li>
+            <li class="flex items-start gap-2"><span class="text-[#D4AF37] mt-0.5">▸</span> Validación de datos</li>
+            <li class="flex items-start gap-2"><span class="text-[#D4AF37] mt-0.5">▸</span> pandas + SQLAlchemy</li>
+          </ul>
+        </div>
+        <div class="glass rounded-2xl p-6 hover-lift">
+          <div class="w-14 h-14 rounded-xl flex items-center justify-center text-[#800020] font-black text-2xl mb-4" style="background: linear-gradient(135deg, #D4AF37, #F4E5A1);">T</div>
+          <h3 class="text-xl font-bold mb-3 gold-text">Transformación</h3>
+          <ul class="space-y-2 text-sm text-white/70">
+            <li class="flex items-start gap-2"><span class="text-[#D4AF37] mt-0.5">▸</span> Eliminación duplicados</li>
+            <li class="flex items-start gap-2"><span class="text-[#D4AF37] mt-0.5">▸</span> Tratamiento nulos</li>
+            <li class="flex items-start gap-2"><span class="text-[#D4AF37] mt-0.5">▸</span> Cálculo de métricas</li>
+            <li class="flex items-start gap-2"><span class="text-[#D4AF37] mt-0.5">▸</span> Extracción de fechas</li>
+          </ul>
+        </div>
+        <div class="glass rounded-2xl p-6 hover-lift">
+          <div class="w-14 h-14 rounded-xl flex items-center justify-center text-[#800020] font-black text-2xl mb-4" style="background: linear-gradient(135deg, #D4AF37, #F4E5A1);">L</div>
+          <h3 class="text-xl font-bold mb-3 gold-text">Carga</h3>
+          <ul class="space-y-2 text-sm text-white/70">
+            <li class="flex items-start gap-2"><span class="text-[#D4AF37] mt-0.5">▸</span> Creación de BD</li>
+            <li class="flex items-start gap-2"><span class="text-[#D4AF37] mt-0.5">▸</span> 4 dimensiones</li>
+            <li class="flex items-start gap-2"><span class="text-[#D4AF37] mt-0.5">▸</span> Tabla de hechos</li>
+            <li class="flex items-start gap-2"><span class="text-[#D4AF37] mt-0.5">▸</span> PostgreSQL</li>
+          </ul>
+        </div>
+      </div>
+      <div class="glass-strong rounded-2xl p-5 fade-up delay-2 flex items-center gap-4" style="background: linear-gradient(90deg, rgba(212, 175, 55, 0.1), transparent);">
+        <i data-lucide="check-circle" class="w-8 h-8 text-[#D4AF37]"></i>
+        <div>
+          <p class="font-bold text-lg">Calidad de datos: <span class="gold-text">≥95%</span></p>
+          <p class="text-sm text-white/60">Datos limpios, normalizados y listos para análisis</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 8: DATA WAREHOUSE -->
+  <div class="slide flex items-center">
+    <div class="max-w-6xl w-full mx-auto">
+      <div class="text-center mb-10 fade-up">
+        <div class="tag mb-4 mx-auto">
+          <span>⭐</span>
+          <span>Data Warehouse</span>
+        </div>
+        <h2 class="serif text-6xl font-bold">Esquema <span class="gold-text">Estrella</span></h2>
+      </div>
+      <div class="relative flex items-center justify-center fade-up delay-1" style="min-height: 450px;">
+        
+        <!-- Círculos de fondo -->
+        <div class="absolute inset-0 flex items-center justify-center">
+          <div class="w-96 h-96 rounded-full border border-[#D4AF37]/20"></div>
+          <div class="absolute w-72 h-72 rounded-full border border-[#D4AF37]/10"></div>
+        </div>
+
+        <!-- Tabla Central: FACT_ENGAGEMENT -->
+        <div class="glass-strong rounded-2xl p-6 border-2 border-[#D4AF37] z-10 w-80 fade-up delay-2">
+          <h3 class="text-center font-bold gold-text text-lg mb-3">FACT_ENGAGEMENT</h3>
+          <div class="space-y-1 text-xs">
+            <p class="text-white/50">🔑 id_engagement (PK)</p>
+            <p class="text-white/70">id_fecha (FK)</p>
+            <p class="text-white/70">id_plataforma (FK)</p>
+            <p class="text-white/70">id_contenido (FK)</p>
+            <p class="text-white/70">id_usuario (FK)</p>
+            <p class="text-white/70">id_campana (FK)</p>
+            <p class="text-[#F4E5A1] font-semibold mt-2">likes, comments, shares</p>
+            <p class="text-[#F4E5A1] font-semibold">views, saves</p>
+            <p class="text-[#F4E5A1] font-semibold">engagement_rate</p>
+          </div>
+        </div>
+
+        <!-- Dimensiones alrededor (Pentágono) -->
+        
+        <!-- DIM_CAMPAÑA (Arriba Centro) -->
+        <div class="absolute top-4 left-1/2 -translate-x-1/2 glass rounded-xl p-3 text-center fade-up delay-3 z-20">
+          <p class="font-bold gold-text text-xs">DIM_CAMPAÑA</p>
+          <p class="text-[10px] text-white/50 mt-1"> Campañas</p>
+        </div>
+
+        <!-- DIM_FECHA (Medio Izquierda) -->
+        <div class="absolute top-1/2 left-4 -translate-y-1/2 glass rounded-xl p-3 text-center fade-up delay-4 z-20">
+          <p class="font-bold gold-text text-xs">DIM_FECHA</p>
+          <p class="text-[10px] text-white/50 mt-1">📅 Tiempo</p>
+        </div>
+
+        <!-- DIM_PLATAFORMA (Medio Derecha) -->
+        <div class="absolute top-1/2 right-4 -translate-y-1/2 glass rounded-xl p-3 text-center fade-up delay-5 z-20">
+          <p class="font-bold gold-text text-xs">DIM_PLATAFORMA</p>
+          <p class="text-[10px] text-white/50 mt-1">📱 Redes</p>
+        </div>
+
+        <!-- DIM_CONTENIDO (Abajo Izquierda) -->
+        <div class="absolute bottom-4 left-1/4 glass rounded-xl p-3 text-center fade-up delay-6 z-20">
+          <p class="font-bold gold-text text-xs">DIM_CONTENIDO</p>
+          <p class="text-[10px] text-white/50 mt-1">📝 Posts</p>
+        </div>
+
+        <!-- DIM_USUARIO (Abajo Derecha) -->
+        <div class="absolute bottom-4 right-1/4 glass rounded-xl p-3 text-center fade-up delay-7 z-20">
+          <p class="font-bold gold-text text-xs">DIM_USUARIO</p>
+          <p class="text-[10px] text-white/50 mt-1">👥 Audiencia</p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 9: KPIs -->
+  <div class="slide flex items-center">
+    <div class="max-w-6xl w-full mx-auto">
+      <div class="text-center mb-10 fade-up">
+        <div class="tag mb-4 mx-auto">
+          <span>📈</span>
+          <span>KPIs</span>
+        </div>
+        <h2 class="serif text-6xl font-bold">Indicadores <span class="gold-text">Estratégicos</span></h2>
+      </div>
+      <div class="grid grid-cols-4 gap-4 fade-up delay-1">
+        <div class="glass rounded-2xl p-5 hover-lift">
+          <i data-lucide="percent" class="w-8 h-8 text-[#D4AF37] mb-3"></i>
+          <h4 class="font-bold mb-2 text-sm">Tasa de Engagement</h4>
+          <p class="text-xs text-white/50">(Likes+Comentarios+Compartidos) / Impresiones × 100</p>
+        </div>
+        <div class="glass rounded-2xl p-5 hover-lift">
+          <i data-lucide="heart" class="w-8 h-8 text-[#D4AF37] mb-3"></i>
+          <h4 class="font-bold mb-2 text-sm">Interacciones Totales</h4>
+          <p class="text-xs text-white/50">Volumen absoluto de engagement</p>
+        </div>
+        <div class="glass rounded-2xl p-5 hover-lift">
+          <i data-lucide="eye" class="w-8 h-8 text-[#D4AF37] mb-3"></i>
+          <h4 class="font-bold mb-2 text-sm">Alcance Promedio</h4>
+          <p class="text-xs text-white/50">Usuarios únicos alcanzados</p>
+        </div>
+        <div class="glass rounded-2xl p-5 hover-lift">
+          <i data-lucide="mouse-pointer" class="w-8 h-8 text-[#D4AF37] mb-3"></i>
+          <h4 class="font-bold mb-2 text-sm">Tasa de Conversión</h4>
+          <p class="text-xs text-white/50">Decisiones de compra efectivas</p>
+        </div>
+        <div class="glass rounded-2xl p-5 hover-lift">
+          <i data-lucide="bar-chart-3" class="w-8 h-8 text-[#D4AF37] mb-3"></i>
+          <h4 class="font-bold mb-2 text-sm">Rendimiento Contenido</h4>
+          <p class="text-xs text-white/50">Identifica formato óptimo</p>
+        </div>
+        <div class="glass rounded-2xl p-5 hover-lift">
+          <i data-lucide="users" class="w-8 h-8 text-[#D4AF37] mb-3"></i>
+          <h4 class="font-bold mb-2 text-sm">Crecimiento Audiencia</h4>
+          <p class="text-xs text-white/50">Expansión de seguidores</p>
+        </div>
+        <div class="glass rounded-2xl p-5 hover-lift">
+          <i data-lucide="activity" class="w-8 h-8 text-[#D4AF37] mb-3"></i>
+          <h4 class="font-bold mb-2 text-sm">Impresiones Totales</h4>
+          <p class="text-xs text-white/50">Exposición total del contenido</p>
+        </div>
+        <div class="glass-strong rounded-2xl p-5 hover-lift border-2 border-[#D4AF37]/40">
+          <i data-lucide="sparkles" class="w-8 h-8 text-[#D4AF37] mb-3"></i>
+          <h4 class="font-bold mb-2 text-sm gold-text">7 KPIs</h4>
+          <p class="text-xs text-white/50">Monitoreo integral</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 10: BACKEND -->
+  <div class="slide flex items-center">
+    <div class="max-w-6xl w-full mx-auto grid grid-cols-2 gap-12">
+      <div class="fade-up">
+        <div class="tag mb-6">
+          <span>🐍</span>
+          <span>Backend</span>
+        </div>
+        <h2 class="serif text-6xl font-bold mb-6 leading-tight">API REST en <span class="gold-text">Flask</span></h2>
+        <p class="text-lg text-white/80 mb-8 leading-relaxed">
+          Backend robusto que procesa consultas SQL dinámicas y expone datos vía JSON al frontend.
+        </p>
+        <div class="space-y-3">
+          <div class="flex items-center gap-3"><i data-lucide="check" class="w-5 h-5 text-[#D4AF37]"></i><span class="text-sm">Consultas SQL dinámicas con filtros</span></div>
+          <div class="flex items-center gap-3"><i data-lucide="check" class="w-5 h-5 text-[#D4AF37]"></i><span class="text-sm">Manejo robusto de errores</span></div>
+          <div class="flex items-center gap-3"><i data-lucide="check" class="w-5 h-5 text-[#D4AF37]"></i><span class="text-sm">psycopg2 + RealDictCursor</span></div>
+          <div class="flex items-center gap-3"><i data-lucide="check" class="w-5 h-5 text-[#D4AF37]"></i><span class="text-sm">CORS habilitado</span></div>
+        </div>
+      </div>
+      <div class="space-y-3 fade-up delay-2">
+        <div class="glass rounded-xl p-4 hover-lift">
+          <div class="flex items-center gap-3 mb-1">
+            <span class="px-2 py-0.5 bg-green-500/20 text-green-400 rounded text-[10px] font-mono font-bold">GET</span>
+            <code class="text-sm font-mono">/api/kpis</code>
+          </div>
+          <p class="text-xs text-white/50">Indicadores generales</p>
+        </div>
+        <div class="glass rounded-xl p-4 hover-lift">
+          <div class="flex items-center gap-3 mb-1">
+            <span class="px-2 py-0.5 bg-green-500/20 text-green-400 rounded text-[10px] font-mono font-bold">GET</span>
+            <code class="text-sm font-mono">/api/evolucion-engagement</code>
+          </div>
+          <p class="text-xs text-white/50">Serie temporal del engagement</p>
+        </div>
+        <div class="glass rounded-xl p-4 hover-lift">
+          <div class="flex items-center gap-3 mb-1">
+            <span class="px-2 py-0.5 bg-green-500/20 text-green-400 rounded text-[10px] font-mono font-bold">GET</span>
+            <code class="text-sm font-mono">/api/distribucion-plataformas</code>
+          </div>
+          <p class="text-xs text-white/50">Distribución por red social</p>
+        </div>
+        <div class="glass rounded-xl p-4 hover-lift">
+          <div class="flex items-center gap-3 mb-1">
+            <span class="px-2 py-0.5 bg-green-500/20 text-green-400 rounded text-[10px] font-mono font-bold">GET</span>
+            <code class="text-sm font-mono">/api/tipo-contenido</code>
+          </div>
+          <p class="text-xs text-white/50">Rendimiento por formato</p>
+        </div>
+        <div class="glass rounded-xl p-4 hover-lift">
+          <div class="flex items-center gap-3 mb-1">
+            <span class="px-2 py-0.5 bg-green-500/20 text-green-400 rounded text-[10px] font-mono font-bold">GET</span>
+            <code class="text-sm font-mono">/api/campanas</code>
+          </div>
+          <p class="text-xs text-white/50">Top 5 campañas</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 11: FRONTEND -->
+  <div class="slide flex items-center">
+    <div class="max-w-6xl w-full mx-auto">
+      <div class="text-center mb-10 fade-up">
+        <div class="tag mb-4 mx-auto">
+          <span>🎨</span>
+          <span>Frontend</span>
+        </div>
+        <h2 class="serif text-6xl font-bold">Interfaz <span class="gold-text">Profesional</span></h2>
+      </div>
+      <div class="grid grid-cols-2 gap-6 mb-6">
+        <div class="glass rounded-2xl p-6 fade-up delay-1">
+          <h3 class="font-bold text-lg mb-4 gold-text">Paleta de Colores</h3>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-lg shadow-lg" style="background: #800020"></div>
+              <div>
+                <p class="font-bold text-sm">Guinda</p>
+                <p class="text-xs text-white/50 font-mono">#800020</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-lg shadow-lg" style="background: #6B001A"></div>
+              <div>
+                <p class="font-bold text-sm">Granate</p>
+                <p class="text-xs text-white/50 font-mono">#6B001A</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-lg shadow-lg" style="background: #D4AF37"></div>
+              <div>
+                <p class="font-bold text-sm">Dorado</p>
+                <p class="text-xs text-white/50 font-mono">#D4AF37</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-lg shadow-lg border border-white/10" style="background: #F5F5F5"></div>
+              <div>
+                <p class="font-bold text-sm">Gris</p>
+                <p class="text-xs text-white/50 font-mono">#F5F5F5</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="glass rounded-2xl p-6 fade-up delay-2">
+          <h3 class="font-bold text-lg mb-4 gold-text">Tecnologías</h3>
+          <div class="grid grid-cols-2 gap-3 text-sm">
+            <div class="flex items-center gap-2"><span>🌐</span> HTML5</div>
+            <div class="flex items-center gap-2"><span>🎨</span> CSS3</div>
+            <div class="flex items-center gap-2"><span>⚡</span> JavaScript ES6+</div>
+            <div class="flex items-center gap-2"><span>📊</span> Chart.js 4.4.0</div>
+            <div class="flex items-center gap-2"><span>🎯</span> Font Awesome</div>
+            <div class="flex items-center gap-2"><span>📱</span> Responsive</div>
+          </div>
+        </div>
+      </div>
+      <div class="glass rounded-2xl p-6 fade-up delay-3">
+        <h3 class="font-bold mb-4 text-sm uppercase tracking-wider text-[#F4E5A1]">Características destacadas</h3>
+        <div class="grid grid-cols-3 gap-4 text-sm">
+          <div class="flex items-start gap-3"><i data-lucide="smartphone" class="w-5 h-5 text-[#D4AF37] flex-shrink-0 mt-0.5"></i><span class="text-white/80">Diseño mobile-first con CSS Grid y Flexbox</span></div>
+          <div class="flex items-start gap-3"><i data-lucide="zap" class="w-5 h-5 text-[#D4AF37] flex-shrink-0 mt-0.5"></i><span class="text-white/80">Actualización dinámica sin recargar página</span></div>
+          <div class="flex items-start gap-3"><i data-lucide="mouse-pointer-click" class="w-5 h-5 text-[#D4AF37] flex-shrink-0 mt-0.5"></i><span class="text-white/80">Animaciones de conteo en KPIs</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 12: COMPARATIVA -->
+  <div class="slide flex items-center">
+    <div class="max-w-6xl w-full mx-auto">
+      <div class="text-center mb-10 fade-up">
+        <div class="tag mb-4 mx-auto">
+          <span>⚖️</span>
+          <span>Comparativa</span>
+        </div>
+        <h2 class="serif text-5xl font-bold mb-3">¿Por qué <span class="gold-text">Flask</span> y no Power BI?</h2>
+      </div>
+      <div class="glass rounded-2xl overflow-hidden fade-up delay-1">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="width: 25%;">Criterio</th>
+              <th style="width: 37.5%;" class="text-center">MetricsPro (Flask)</th>
+              <th style="width: 37.5%;" class="text-center">Power BI</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="font-semibold">💰 Costo</td>
+              <td class="text-center"><span class="text-green-400 font-semibold">✓ Gratuito</span></td>
+              <td class="text-center"><span class="text-red-400">✗ Licencias</span></td>
+            </tr>
+            <tr>
+              <td class="font-semibold">🎨 Personalización</td>
+              <td class="text-center"><span class="text-green-400 font-semibold">✓ Total</span></td>
+              <td class="text-center"><span class="text-yellow-400">◐ Limitada</span></td>
+            </tr>
+            <tr>
+              <td class="font-semibold">🔗 Integración</td>
+              <td class="text-center"><span class="text-green-400 font-semibold">✓ Flexible</span></td>
+              <td class="text-center"><span class="text-yellow-400">◐ Microsoft</span></td>
+            </tr>
+            <tr>
+              <td class="font-semibold">☁️ Portabilidad</td>
+              <td class="text-center"><span class="text-green-400 font-semibold">✓ Cualquier navegador</span></td>
+              <td class="text-center"><span class="text-red-400">✗ Instalación</span></td>
+            </tr>
+            <tr>
+              <td class="font-semibold">📝 Control código</td>
+              <td class="text-center"><span class="text-green-400 font-semibold">✓ Open Source</span></td>
+              <td class="text-center"><span class="text-red-400">✗ Propietario</span></td>
+            </tr>
+            <tr>
+              <td class="font-semibold">🎓 Académico</td>
+              <td class="text-center"><span class="text-green-400 font-semibold">✓ Aprendizaje integral</span></td>
+              <td class="text-center"><span class="text-yellow-400">◐ Superficial</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 13: DESPLIEGUE -->
+  <div class="slide flex items-center">
+    <div class="max-w-6xl w-full mx-auto">
+      <div class="text-center mb-10 fade-up">
+        <div class="tag mb-4 mx-auto">
+          <span>🚀</span>
+          <span>Despliegue</span>
+        </div>
+        <h2 class="serif text-6xl font-bold mb-3">Disponible en la <span class="gold-text">Nube</span></h2>
+      </div>
+      <div class="grid grid-cols-4 gap-5 mb-8 fade-up delay-1">
+        <div class="glass rounded-2xl p-6 text-center hover-lift">
+          <div class="w-14 h-14 rounded-2xl bg-[#D4AF37]/20 flex items-center justify-center mx-auto mb-3">
+            <i data-lucide="git-branch" class="w-7 h-7 text-[#D4AF37]"></i>
+          </div>
+          <h4 class="font-bold mb-1">1. GitHub</h4>
+          <p class="text-xs text-white/50">Código versionado</p>
+        </div>
+        <div class="glass rounded-2xl p-6 text-center hover-lift">
+          <div class="w-14 h-14 rounded-2xl bg-[#D4AF37]/20 flex items-center justify-center mx-auto mb-3">
+            <i data-lucide="cloud" class="w-7 h-7 text-[#D4AF37]"></i>
+          </div>
+          <h4 class="font-bold mb-1">2. Render</h4>
+          <p class="text-xs text-white/50">Hosting en la nube</p>
+        </div>
+        <div class="glass rounded-2xl p-6 text-center hover-lift">
+          <div class="w-14 h-14 rounded-2xl bg-[#D4AF37]/20 flex items-center justify-center mx-auto mb-3">
+            <i data-lucide="server" class="w-7 h-7 text-[#D4AF37]"></i>
+          </div>
+          <h4 class="font-bold mb-1">3. Gunicorn</h4>
+          <p class="text-xs text-white/50">Servidor WSGI</p>
+        </div>
+        <div class="glass rounded-2xl p-6 text-center hover-lift">
+          <div class="w-14 h-14 rounded-2xl bg-[#D4AF37]/20 flex items-center justify-center mx-auto mb-3">
+            <i data-lucide="shield-check" class="w-7 h-7 text-[#D4AF37]"></i>
+          </div>
+          <h4 class="font-bold mb-1">4. HTTPS</h4>
+          <p class="text-xs text-white/50">Certificado SSL</p>
+        </div>
+      </div>
+      <div class="glass-strong rounded-2xl p-8 text-center border-2 border-[#D4AF37]/30 fade-up delay-2" style="background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(128, 0, 32, 0.1));">
+        <p class="text-sm text-white/60 mb-3 uppercase tracking-wider">Accede al dashboard en vivo</p>
+        <a href="https://proyecto-5-43pi.onrender.com" target="_blank" class="inline-block group">
+          <p class="serif text-3xl font-bold gold-text group-hover:scale-105 transition-transform">🌐 proyecto-5-43pi.onrender.com</p>
+        </a>
+        <p class="text-xs text-white/50 mt-4">✨ Despliegue continuo automático con cada push a GitHub</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 14: RESULTADOS -->
+  <div class="slide flex items-center">
+    <div class="max-w-6xl w-full mx-auto">
+      <div class="text-center mb-10 fade-up">
+        <div class="tag mb-4 mx-auto">
+          <span>💡</span>
+          <span>Resultados</span>
+        </div>
+        <h2 class="serif text-6xl font-bold">Hallazgos <span class="gold-text">Clave</span></h2>
+      </div>
+      <div class="grid grid-cols-3 gap-5 mb-6 fade-up delay-1">
+        <div class="glass rounded-2xl p-6 hover-lift">
+          <div class="serif text-5xl mb-3">📱</div>
+          <h3 class="text-xl font-bold mb-2 gold-text">Instagram Lidera</h3>
+          <p class="text-sm text-white/70">La plataforma con mayor tasa de engagement e interacciones del dataset analizado.</p>
+        </div>
+        <div class="glass rounded-2xl p-6 hover-lift">
+          <div class="serif text-5xl mb-3">🎥</div>
+          <h3 class="text-xl font-bold mb-2 gold-text">Video es Rey</h3>
+          <p class="text-sm text-white/70">Los videos generan significativamente más interacciones que otros formatos.</p>
+        </div>
+        <div class="glass rounded-2xl p-6 hover-lift">
+          <div class="serif text-5xl mb-3">📈</div>
+          <h3 class="text-xl font-bold mb-2 gold-text">Engagement 31%</h3>
+          <p class="text-sm text-white/70">Tasa promedio muy superior al benchmark del sector (3-5%).</p>
+        </div>
+      </div>
+      <div class="grid grid-cols-4 gap-4 fade-up delay-2">
+        <div class="glass-strong rounded-2xl p-5 text-center">
+          <div class="serif text-3xl font-black gold-text mb-1">31%</div>
+          <p class="text-xs text-white/60">Engagement</p>
+        </div>
+        <div class="glass-strong rounded-2xl p-5 text-center">
+          <div class="serif text-3xl font-black gold-text mb-1">47.3M</div>
+          <p class="text-xs text-white/60">Interacciones</p>
+        </div>
+        <div class="glass-strong rounded-2xl p-5 text-center">
+          <div class="serif text-3xl font-black gold-text mb-1">554.8M</div>
+          <p class="text-xs text-white/60">Alcance</p>
+        </div>
+        <div class="glass-strong rounded-2xl p-5 text-center">
+          <div class="serif text-3xl font-black gold-text mb-1">&lt;5s</div>
+          <p class="text-xs text-white/60">Tiempo carga</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 15: CONCLUSIONES -->
+  <div class="slide flex items-center justify-center">
+    <div class="max-w-5xl w-full mx-auto text-center">
+      <div class="fade-up">
+        <div class="tag mb-6 mx-auto">
+          <span>🏆</span>
+          <span>Conclusiones</span>
+        </div>
+        <h2 class="serif text-7xl font-black mb-4 leading-tight">
+          <span class="gold-text">MetricsPro</span>
+        </h2>
+        <p class="text-2xl text-white/80 mb-12 font-light">Un BI hecho a medida</p>
+      </div>
+      <div class="grid grid-cols-3 gap-5 mb-12 fade-up delay-1">
+        <div class="glass rounded-2xl p-6 hover-lift">
+          <div class="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 text-[#800020]" style="background: linear-gradient(135deg, #D4AF37, #F4E5A1);">
+            <i data-lucide="check-circle" class="w-7 h-7"></i>
+          </div>
+          <h4 class="font-bold mb-2">Objetivos Cumplidos</h4>
+          <p class="text-sm text-white/60">Los 7 objetivos específicos alcanzados exitosamente</p>
+        </div>
+        <div class="glass rounded-2xl p-6 hover-lift">
+          <div class="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 text-[#800020]" style="background: linear-gradient(135deg, #D4AF37, #F4E5A1);">
+            <i data-lucide="award" class="w-7 h-7"></i>
+          </div>
+          <h4 class="font-bold mb-2">Solución Profesional</h4>
+          <p class="text-sm text-white/60">Dashboard desplegado y accesible públicamente</p>
+        </div>
+        <div class="glass rounded-2xl p-6 hover-lift">
+          <div class="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 text-[#800020]" style="background: linear-gradient(135deg, #D4AF37, #F4E5A1);">
+            <i data-lucide="book-open" class="w-7 h-7"></i>
+          </div>
+          <h4 class="font-bold mb-2">Aprendizaje Integral</h4>
+          <p class="text-sm text-white/60">Dominio completo del ciclo de BI</p>
+        </div>
+      </div>
+      <div class="fade-up delay-2">
+        <div class="w-24 h-px bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent mx-auto mb-8"></div>
+        <p class="serif text-3xl text-white/90 mb-3">¡Gracias por su atención!</p>
+        <p class="text-sm text-white/50">Universidad del Valle · Business Intelligence · 2025</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Navigation -->
+<div class="fixed bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-3 z-50">
+  <button id="prevBtn" class="nav-btn w-12 h-12 rounded-full glass flex items-center justify-center">
+    <i data-lucide="chevron-left" class="w-5 h-5"></i>
+  </button>
+  <div id="dotsContainer" class="flex items-center gap-1.5 px-3 py-2 glass rounded-full"></div>
+  <button id="nextBtn" class="nav-btn w-12 h-12 rounded-full flex items-center justify-center" style="background: linear-gradient(135deg, #D4AF37, #F4E5A1);">
+    <i data-lucide="chevron-right" class="w-5 h-5 text-[#800020]"></i>
+  </button>
+</div>
+
+<script>
+  lucide.createIcons();
+  
+  let currentSlide = 0;
+  const slides = document.querySelectorAll('.slide');
+  const totalSlides = slides.length;
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const progressBar = document.getElementById('progressBar');
+  const currentSlideEl = document.getElementById('currentSlide');
+  const totalSlidesEl = document.getElementById('totalSlides');
+  const dotsContainer = document.getElementById('dotsContainer');
+  
+  totalSlidesEl.textContent = String(totalSlides).padStart(2, '0');
+  
+  // Create dots
+  for (let i = 0; i < totalSlides; i++) {
+    const dot = document.createElement('button');
+    dot.className = 'w-1.5 h-1.5 rounded-full transition-all duration-300';
+    dot.style.background = i === 0 ? '#D4AF37' : 'rgba(255, 255, 255, 0.3)';
+    if (i === 0) dot.style.width = '24px';
+    dot.addEventListener('click', () => showSlide(i));
+    dotsContainer.appendChild(dot);
+  }
+  
+  function showSlide(index) {
+    slides.forEach((slide, i) => {
+      slide.classList.remove('active');
+      if (i === index) slide.classList.add('active');
+    });
+    
+    currentSlide = index;
+    progressBar.style.width = `${((index + 1) / totalSlides) * 100}%`;
+    currentSlideEl.textContent = String(index + 1).padStart(2, '0');
+    prevBtn.disabled = index === 0;
+    nextBtn.disabled = index === totalSlides - 1;
+    
+    // Update dots
+    const dots = dotsContainer.querySelectorAll('button');
+    dots.forEach((dot, i) => {
+      if (i === index) {
+        dot.style.background = '#D4AF37';
+        dot.style.width = '24px';
+      } else {
+        dot.style.background = 'rgba(255, 255, 255, 0.3)';
+        dot.style.width = '6px';
+      }
+    });
+    
+    lucide.createIcons();
+  }
+  
+  nextBtn.addEventListener('click', () => {
+    if (currentSlide < totalSlides - 1) showSlide(currentSlide + 1);
+  });
+  
+  prevBtn.addEventListener('click', () => {
+    if (currentSlide > 0) showSlide(currentSlide - 1);
+  });
+  
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') {
+      e.preventDefault();
+      if (currentSlide < totalSlides - 1) showSlide(currentSlide + 1);
+    }
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      if (currentSlide > 0) showSlide(currentSlide - 1);
+    }
+    if (e.key === 'Home') showSlide(0);
+    if (e.key === 'End') showSlide(totalSlides - 1);
+  });
+  
+  showSlide(0);
+</script>
+
+</body>
+</html>
